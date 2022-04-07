@@ -1,0 +1,14 @@
+---
+title: "Write title"
+output: 
+  html_notebook:
+    number_sections: true
+    toc: yes
+editor_options:
+  markdown:
+    canonical: false    
+---
+
+# Title
+
+Description here

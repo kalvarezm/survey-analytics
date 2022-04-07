@@ -1,0 +1,12 @@
+# For R
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+renv/*
+
+# For Python
+**/.ipynb_checkpoints/*
+
+# General
+README.html
