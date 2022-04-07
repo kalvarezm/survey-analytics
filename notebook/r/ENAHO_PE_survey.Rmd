@@ -21,6 +21,8 @@ The National Household Survey is the research that allows the National Institute
 
 -   <http://iinei.inei.gob.pe/microdatos/>
 
+- http://webinei.inei.gob.pe/anda_inei/index.php/catalog/613/datafile/
+
 ## Setup
 
 ```{r include=FALSE}
@@ -28,23 +30,271 @@ rm(list = ls())
 ```
 
 ```{r include=FALSE}
+library(dplyr)
+library(data.table)
 library(here)
+library(tictoc)
 ```
 
 ```{r include=FALSE}
 source("../../script/r/dataset/download_dataset.R")
 ```
 
-## Dataset
+## Download dataset
 
 ```{r include=FALSE}
 download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo01.zip") # Household
 download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo02.zip") # People
 download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo03.zip") # Education
-download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo04.zip") # Health
 download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo05.zip") # Incomes
 ```
 
+```{r}
+DATASET_ENAHO_100 <- paste(DATA_RAW_PATH, "ENAHO/737-Modulo01/Enaho01-2020-100.csv", sep = "/") # Household
+DATASET_ENAHO_200 <- paste(DATA_RAW_PATH, "ENAHO/737-Modulo02/Enaho01-2020-200.csv", sep = "/") # People
+DATASET_ENAHO_300 <- paste(DATA_RAW_PATH, "ENAHO/737-Modulo03/Enaho01A-2020-300.csv", sep = "/") # Education
+DATASET_ENAHO_500 <- paste(DATA_RAW_PATH, "ENAHO/737-Modulo05/Enaho01A-2020-500.csv", sep = "/") # Incomes
+```
+
+## Household level
+
+**Variables**
+
+1. **CONGLOME**: Número de conglomerado 
+2. **VIVIENDA**: Número de selección de vivienda
+3. **HOGAR**: Número secuencial del hogar
+4. **UBIGEO**: Ubicación geográfica
+5. **DOMINIO**: Dominio Geográfico (1 Costa Norte, 2 Costa Centro, 3 Costa Sur, 4 Sierra Norte, 5 Sierra Centro, 6 Sierra Sur, 7 Selva, 8 Lima Metropolitana)
+6. **ESTRATO**: Número secuencial del hogar
+    (Estrato Geográfico 
+     1 De 500 000 a más habitantes. 
+     2 De 100 000 a 499 999 habitantes. 
+     3 De 50 000 a 99 999 habitantes. 
+     4 De 20 000 a 49 999 habitantes. 
+     5 De 2 000 a 19 999 habitantes. 
+     6 De 500 a 1 999 habitantes. 
+     7 Área de Empadronamiento Rural (AER) Compuesto 
+     8 Área de Empadronamiento Rural (AER) Simple)
+
+
+```{r}
+tic("Reading")
+enaho_household <- 
+  fread(
+    DATASET_ENAHO_100,
+    data.table = FALSE,
+    sep = ",",
+    encoding = "Latin-1",
+    select = c("CONGLOME", "VIVIENDA", "HOGAR", "UBIGEO", "DOMINIO", "ESTRATO"),
+    colClasses = c("CONGLOME" = "integer",
+                   "VIVIENDA" = "integer",
+                   "HOGAR" = "integer",
+                   "UBIGEO" = "character",
+                   "DOMINIO" = "integer",
+                   "ESTRATO" = "integer"
+                   )
+  )
+toc()
+```
+```{r}
+enaho_household
+```
+
+## People level
+
+**Variables**
+
+1. **CONGLOME**: Número de conglomerado 
+2. **VIVIENDA**: Número de selección de vivienda
+3. **HOGAR**: Número secuencial del hogar
+4. **CODPERSO**: Número de orden de la persona 
+5. **UBIGEO**: Ubicación geográfica
+6. **DOMINIO**: Dominio Geográfico (1 Costa Norte, 2 Costa Centro, 3 Costa Sur, 4 Sierra Norte, 5 Sierra Centro, 6 Sierra Sur, 7 Selva, 8 Lima Metropolitana)
+7. **ESTRATO**: Número secuencial del hogar
+    (Estrato Geográfico 
+     1 De 500 000 a más habitantes. 
+     2 De 100 000 a 499 999 habitantes. 
+     3 De 50 000 a 99 999 habitantes. 
+     4 De 20 000 a 49 999 habitantes. 
+     5 De 2 000 a 19 999 habitantes. 
+     6 De 500 a 1 999 habitantes. 
+     7 Área de Empadronamiento Rural (AER) Compuesto 
+     8 Área de Empadronamiento Rural (AER) Simple)
+8. **P203**:  ¿Cuál es la relación de parentesco con el jefe del hogar? 
+     0 Panel (No Presente el año actual) 
+     1 Jefe(a) 
+     2 Esposa(o)/compañero(a) 
+     3 Hijo(a)/Hijastro(a) 
+     4 Yerno/Nuera 
+     5 Nieto(a) 
+     6 Padres/Suegros 
+     7 Otros parientes 
+     8 Trabajador Hogar 
+     9 Pensionista 
+     10 Otros no parientes 
+     11 Hermano(a)
+9. **P207**: Sexo (1 Hombre, 2 Mujer)
+10. **P208A**: ¿ Qué edad tiene en años cumplidos ? - En años 99 Missing value 
+11. **P209**  ¿Cuál es su estado civil o conyugal? (1 Conviviente, 2 Casado(a), 3 Viudo(a), 4 Divorciado(a), 5 Separado(a), 6 Soltero(a))
+
+```{r}
+tic("Reading")
+enaho_people <- 
+  fread(
+    DATASET_ENAHO_200,
+    data.table = FALSE,
+    sep = ",",
+    encoding = "Latin-1",
+    select = c("CONGLOME", "VIVIENDA", "HOGAR", "CODPERSO", "UBIGEO", "DOMINIO", "ESTRATO",
+               "P203", "P207", "P208A", "P209"),
+    colClasses = c("CONGLOME" = "integer",
+                   "VIVIENDA" = "integer",
+                   "HOGAR" = "integer",
+                   "CODPERSO" = "integer",
+                   "UBIGEO" = "character",
+                   "DOMINIO" = "integer",
+                   "ESTRATO" = "integer",
+                   "P203" = "integer",
+                   "P207" = "integer",
+                   "P208A" = "integer",
+                   "P209" = "integer"
+                   )
+  )
+toc()
+```
+
+```{r}
+enaho_people
+```
+## Education
+
+**Variables**
+
+1. **CONGLOME**: Número de conglomerado 
+2. **VIVIENDA**: Número de selección de vivienda
+3. **HOGAR**: Número secuencial del hogar
+4. **CODPERSO**: Número de orden de la persona 
+5. **UBIGEO**: Ubicación geográfica
+6. **DOMINIO**: Dominio Geográfico (1 Costa Norte, 2 Costa Centro, 3 Costa Sur, 4 Sierra Norte, 5 Sierra Centro, 6 Sierra Sur, 7 Selva, 8 Lima Metropolitana)
+7. **ESTRATO**: Número secuencial del hogar
+    (Estrato Geográfico 
+     1 De 500 000 a más habitantes. 
+     2 De 100 000 a 499 999 habitantes. 
+     3 De 50 000 a 99 999 habitantes. 
+     4 De 20 000 a 49 999 habitantes. 
+     5 De 2 000 a 19 999 habitantes. 
+     6 De 500 a 1 999 habitantes. 
+     7 Área de Empadronamiento Rural (AER) Compuesto 
+     8 Área de Empadronamiento Rural (AER) Simple)
+8. **P300A**:  ¿ Cuál es el idioma o lengua materna que aprendió en su niñez ?  
+     1 Quechua 
+     2 Aimara 
+     3 Otra lengua nativa 
+     4 Castellano 
+     6 Portugués 
+     7 Otra lengua extranjera 
+     8 No escucha/no habla 
+     9 Lengua de señas peruanas 
+     10 Ashaninka
+     11 Awajun/Aguaruna
+     12 Shipibo-Konibo 
+     13 Shawi/Chayahuita 
+     14 Matsigenka/Machiguenga 
+     15 Achuar
+9. **P301A**: ¿ Cuál es el último año o grado de estudios y nivel que aprobó ? - Nivel 
+    1 Sin nivel 
+    2 Educaion inicial 
+    3 Primaria incompleta 
+    4 Primaria completa 
+    5 Secundaria Incompleta 
+    6 Secundaria completa 
+    7 Superior no universitaria incompleta 
+    8 Superior no Universitaria completa 
+    9 Superior Universitaria Incompleta 
+    10 Superior Universitaria Completa 
+    11 Maestria/doctorado 
+    12 Básica especial 
+    99 Missing value
+
+```{r}
+tic("Reading")
+enaho_education <- 
+  fread(
+    DATASET_ENAHO_300,
+    data.table = FALSE,
+    sep = ",",
+    encoding = "Latin-1",
+    select = c("CONGLOME", "VIVIENDA", "HOGAR", "CODPERSO", "UBIGEO", "DOMINIO", "ESTRATO",
+               "P300A", "P301A"),
+    colClasses = c("CONGLOME" = "integer",
+                   "VIVIENDA" = "integer",
+                   "HOGAR" = "integer",
+                   "CODPERSO" = "integer",
+                   "UBIGEO" = "character",
+                   "DOMINIO" = "integer",
+                   "ESTRATO" = "integer",
+                   "P300A" = "integer",
+                   "P301A" = "integer"
+                   )
+  )
+toc()
+```
+
+```{r}
+enaho_education
+```
+## Incomes
+
+1. **CONGLOME**: Número de conglomerado 
+2. **VIVIENDA**: Número de selección de vivienda
+3. **HOGAR**: Número secuencial del hogar
+4. **CODPERSO**: Número de orden de la persona 
+5. **UBIGEO**: Ubicación geográfica
+6. **DOMINIO**: Dominio Geográfico (1 Costa Norte, 2 Costa Centro, 3 Costa Sur, 4 Sierra Norte, 5 Sierra Centro, 6 Sierra Sur, 7 Selva, 8 Lima Metropolitana)
+7. **ESTRATO**: Número secuencial del hogar
+    (Estrato Geográfico 
+     1 De 500 000 a más habitantes. 
+     2 De 100 000 a 499 999 habitantes. 
+     3 De 50 000 a 99 999 habitantes. 
+     4 De 20 000 a 49 999 habitantes. 
+     5 De 2 000 a 19 999 habitantes. 
+     6 De 500 a 1 999 habitantes. 
+     7 Área de Empadronamiento Rural (AER) Compuesto 
+     8 Área de Empadronamiento Rural (AER) Simple)
+8. **P501** La semana pasada del...al ...tuvo Ud. algún trabajo? (1 Si, 2 No, 9 Missing Value)
+9. **P505**  ¿Cuál es la ocupación principal que desempeño? (revisión CIOU-88) 999 Missing value
+10. **P505R4** ¿Cuál es la ocupación principal que desempeño? (revisión CIOU-2015) 9999 Missing value
+11. **P524A1** Ingreso total-monto (S/.) 999999 Missing value
+
+```{r}
+tic("Reading")
+enaho_incomes <- 
+  fread(
+    DATASET_ENAHO_500,
+    data.table = FALSE,
+    sep = ",",
+    encoding = "Latin-1",
+    select = c("CONGLOME", "VIVIENDA", "HOGAR", "CODPERSO", "UBIGEO", "DOMINIO", "ESTRATO",
+               "P501", "P505", "P505R4", "P524A1"),
+    colClasses = c("CONGLOME" = "integer",
+                   "VIVIENDA" = "integer",
+                   "HOGAR" = "integer",
+                   "CODPERSO" = "integer",
+                   "UBIGEO" = "character",
+                   "DOMINIO" = "integer",
+                   "ESTRATO" = "integer",
+                   "P501" = "integer",
+                   "P505" = "integer",
+                   "P505R4" = "integer",
+                   "P524A1" = "numeric"
+                   )
+  )
+toc()
+```
+
+```{r}
+enaho_incomes
+```
 
 
 
