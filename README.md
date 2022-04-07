@@ -1,6 +1,6 @@
-# Template Analytics
+# Survey Analytics
 
-Template for analytics repositories
+Analytics for surveys in people and household level
 
 ## 1) Software to install
 
