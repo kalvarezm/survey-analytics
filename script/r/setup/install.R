@@ -22,6 +22,7 @@ install.packages("devtools") # Create packages
 install.packages("tictoc") # Measure time
 install.packages("microbenchmark") # Benchmarking
 install.packages("log4r") # Log files
+install.packages("here") # Relative paths
 
 #------------------------------------
 # INSTALL DATA MANIPULATION PACKAGES

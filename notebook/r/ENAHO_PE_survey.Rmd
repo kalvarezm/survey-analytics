@@ -1,0 +1,50 @@
+---
+title: "ENAHO"
+output: 
+  html_notebook:
+    number_sections: true
+    toc: yes
+  editor_options:
+    markdown:
+      canonical: false        
+---
+
+# ENAHO - Peru
+
+La Encuesta Nacional de Hogares es la investigación que permite al Instituto Nacional de Estadística e Informática (INEI) desde el año 1995, efectuar el seguimiento de los indicadores sobre las condiciones de vida.
+
+The National Household Survey is the research that allows the National Institute of Statistics and Informatics (INEI) since 1995, to monitor the indicators on living conditions.
+
+**Source:**
+
+-   [https://www.datosabiertos.gob.pe/dataset/encuesta-nacional-de-hogares-enaho-2020-instituto-nacional-de-estadística-e-informática-inei](https://www.datosabiertos.gob.pe/dataset/encuesta-nacional-de-hogares-enaho-2020-instituto-nacional-de-estadística-e-informática-inei){.uri}
+
+-   <http://iinei.inei.gob.pe/microdatos/>
+
+## Setup
+
+```{r include=FALSE}
+rm(list = ls())
+```
+
+```{r include=FALSE}
+library(here)
+```
+
+```{r include=FALSE}
+source("../../script/r/dataset/download_dataset.R")
+```
+
+## Dataset
+
+```{r include=FALSE}
+download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo01.zip") # Household
+download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo02.zip") # People
+download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo03.zip") # Education
+download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo04.zip") # Health
+download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo05.zip") # Incomes
+```
+
+
+
+

@@ -12,6 +12,7 @@ library(devtools)
 library(tictoc)
 library(microbenchmark)
 library(log4r)
+library(here)
 
 #------------------------------------
 # LOAD DATA MANIPULATION PACKAGES
