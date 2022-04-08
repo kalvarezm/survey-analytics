@@ -1,0 +1,75 @@
+---
+title: "UBIGEO"
+output: 
+  html_notebook:
+    number_sections: true
+    toc: yes
+  editor_options:
+    markdown:
+      canonical: false        
+---
+
+# UBIGEO
+
+Ubigeo is the coding system for geographical locations (Spanish: Código Ubicacíon Geográfica) in Peru used by the National Statistics and Computing Institute (Spanish: Instituto Nacional de Estadística e Informática INEI[1]) to code the first-level administrative subdivision: regions (Spanish: regiones, singular: región), the second-level administrative subdivision: provinces (Spanish: provincias, singular: provincia) and the third-level administrative subdivision: districts (Spanish: distritos, singular: distrito). There are 1874 different ubigeos in Peru.
+
+**Source:**
+
+- https://en.wikipedia.org/wiki/UBIGEO
+- https://www.datosabiertos.gob.pe/dataset/codigos-equivalentes-de-ubigeo-del-peru
+- https://github.com/jmcastagnetto/ubigeo-peru-aumentado
+
+## Setup
+
+```{r include=FALSE}
+rm(list = ls())
+```
+
+```{r include=FALSE}
+library(dplyr)
+library(stringr)
+library(readr)
+
+library(data.table)
+library(here)
+library(tictoc)
+library(skimr)
+
+library(fst)
+```
+
+```{r include=FALSE}
+source("../../script/r/dataset/download_dataset.R")
+```
+
+### Ubigeo package
+
+- https://github.com/jmcastagnetto/ubigeo
+
+```{r}
+library(ubigeo)
+```
+
+
+## Province
+
+```{r}
+ubigeo_province
+```
+
+## Department
+
+```{r}
+ubigeo_department
+```
+## District
+
+```{r}
+ubigeo_district
+```
+
+## CCPP (Centro Poblado)
+
+```{r}
+ubigeo_ccpp
+```

@@ -37,3 +37,8 @@ install.packages("fst") # File storage
 #------------------------------------
 install.packages("skimr") # Summary
 install.packages("psych") # Correlation
+
+#------------------------------------
+# INSTALL GITHUB PACKAGES
+#------------------------------------
+devtools::install_github("jmcastagnetto/ubigeo")
