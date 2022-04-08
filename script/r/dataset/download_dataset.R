@@ -17,23 +17,27 @@ create_folders <- function() {
 create_folders()
 
 # TODO generalize
-download_file <- function(url) {
+download_file <- function(url, dataset_group, 
+                          filename = NULL) {
 
   # Create folders
-  folder_path <- paste(DATA_DOWNLOADED_PATH, "ENAHO", sep = "/")
+  folder_path <- paste(DATA_DOWNLOADED_PATH, dataset_group, sep = "/")
   if (!file.exists(folder_path)) {
     dir.create(folder_path, recursive = TRUE)
   }
 
   # Download dataset
   file_name <- basename(url)
+  if (!is.null(filename)){
+    file_name <- filename
+  }
   file_path <- paste(folder_path, file_name, sep = "/")
   if (!file.exists(file_path)) {
     download.file(url, file_path)
   }
 
   # Extract files
-  folder_extracted_path <- paste(DATA_RAW_PATH, "ENAHO", sep = "/")
+  folder_extracted_path <- paste(DATA_RAW_PATH, dataset_group, sep = "/")
   if (!file.exists(folder_extracted_path)) {
     dir.create(folder_extracted_path, recursive = TRUE)
   }

@@ -39,6 +39,7 @@ library(here)
 library(tictoc)
 library(skimr)
 
+library(fst)
 ```
 
 ```{r include=FALSE}
@@ -48,10 +49,10 @@ source("../../script/r/dataset/download_dataset.R")
 ## Download dataset
 
 ```{r include=FALSE}
-download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo01.zip") # Household
-download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo02.zip") # People
-download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo03.zip") # Education
-download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo05.zip") # Incomes
+download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo01.zip", "ENAHO") # Household
+download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo02.zip", "ENAHO") # People
+download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo03.zip", "ENAHO") # Education
+download_file("http://iinei.inei.gob.pe/iinei/srienaho/descarga/CSV/737-Modulo05.zip", "ENAHO") # Incomes
 ```
 
 ```{r}
@@ -616,4 +617,49 @@ toc()
 
 ```{r}
 enaho_people_level
+```
+## Save Dataset
+
+```{r}
+folder_p_level_path <- paste(DATA_PROCESSED_PATH, "ENAHO", sep = "/")
+if (!file.exists(folder_p_level_path)) {
+  dir.create(folder_p_level_path, recursive = TRUE)
+}
+```
+
+### FST format
+
+```{r}
+tic("Save fst")
+write_fst(enaho_household_level, 
+          path = paste(folder_p_level_path, "enaho_hh_level.fst", sep = "/"), 
+          compress = 50)
+toc()
+```
+
+```{r}
+tic("Save fst")
+write_fst(enaho_people_level, 
+          path = paste(folder_p_level_path, "enaho_p_level.fst", sep = "/"), 
+          compress = 50)
+toc()
+```
+### CSV format
+
+```{r}
+tic("Save csv")
+fwrite(
+  enaho_household_level, 
+  paste(folder_p_level_path, "enaho_hh_level.csv", sep = "/"), 
+)
+toc()
+```
+
+```{r}
+tic("Save csv")
+fwrite(
+  enaho_people_level, 
+  paste(folder_p_level_path, "enaho_p_level.csv", sep = "/"), 
+)
+toc()
 ```
