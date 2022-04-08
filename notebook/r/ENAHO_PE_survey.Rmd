@@ -31,9 +31,14 @@ rm(list = ls())
 
 ```{r include=FALSE}
 library(dplyr)
+library(stringr)
+library(readr)
+
 library(data.table)
 library(here)
 library(tictoc)
+library(skimr)
+
 ```
 
 ```{r include=FALSE}
@@ -64,9 +69,16 @@ DATASET_ENAHO_500 <- paste(DATA_RAW_PATH, "ENAHO/737-Modulo05/Enaho01A-2020-500.
 2. **VIVIENDA**: Número de selección de vivienda
 3. **HOGAR**: Número secuencial del hogar
 4. **UBIGEO**: Ubicación geográfica
-5. **DOMINIO**: Dominio Geográfico (1 Costa Norte, 2 Costa Centro, 3 Costa Sur, 4 Sierra Norte, 5 Sierra Centro, 6 Sierra Sur, 7 Selva, 8 Lima Metropolitana)
-6. **ESTRATO**: Número secuencial del hogar
-    (Estrato Geográfico 
+5. **DOMINIO**: Dominio Geográfico
+     1 Costa Norte
+     2 Costa Centro
+     3 Costa Sur
+     4 Sierra Norte
+     5 Sierra Centro
+     6 Sierra Sur
+     7 Selva
+     8 Lima Metropolitana
+6. **ESTRATO**: Estrato geográfico
      1 De 500 000 a más habitantes. 
      2 De 100 000 a 499 999 habitantes. 
      3 De 50 000 a 99 999 habitantes. 
@@ -79,21 +91,37 @@ DATASET_ENAHO_500 <- paste(DATA_RAW_PATH, "ENAHO/737-Modulo05/Enaho01A-2020-500.
 
 ```{r}
 tic("Reading")
-enaho_household <- 
+enaho_household <-
   fread(
     DATASET_ENAHO_100,
     data.table = FALSE,
     sep = ",",
     encoding = "Latin-1",
-    select = c("CONGLOME", "VIVIENDA", "HOGAR", "UBIGEO", "DOMINIO", "ESTRATO"),
-    colClasses = c("CONGLOME" = "integer",
-                   "VIVIENDA" = "integer",
-                   "HOGAR" = "integer",
-                   "UBIGEO" = "character",
-                   "DOMINIO" = "integer",
-                   "ESTRATO" = "integer"
-                   )
-  )
+    select = c(
+      "CONGLOME", "VIVIENDA", "HOGAR", "UBIGEO", "DOMINIO",
+      "ESTRATO", "PANEL"
+    ),
+    colClasses = c(
+      "CONGLOME" = "integer",
+      "VIVIENDA" = "integer",
+      "HOGAR" = "integer",
+      "UBIGEO" = "character",
+      "DOMINIO" = "integer",
+      "ESTRATO" = "integer",
+      "PANEL" = "integer"
+    ),
+    col.names = c(
+      "CONGLOMERATE", "DWELLING", "HOUSEHOLD", "GEOCODE", "DOMAIN",
+      "STRATUM", "PANEL"
+    )
+  ) %>%
+  mutate("PANEL" = factor(
+    PANEL,
+    exclude = NA,
+    levels = c("1"),
+    labels = c("Si"),
+    ordered = FALSE
+  ))
 toc()
 ```
 ```{r}
@@ -109,9 +137,16 @@ enaho_household
 3. **HOGAR**: Número secuencial del hogar
 4. **CODPERSO**: Número de orden de la persona 
 5. **UBIGEO**: Ubicación geográfica
-6. **DOMINIO**: Dominio Geográfico (1 Costa Norte, 2 Costa Centro, 3 Costa Sur, 4 Sierra Norte, 5 Sierra Centro, 6 Sierra Sur, 7 Selva, 8 Lima Metropolitana)
-7. **ESTRATO**: Número secuencial del hogar
-    (Estrato Geográfico 
+6. **DOMINIO**: Dominio Geográfico
+     1 Costa Norte
+     2 Costa Centro
+     3 Costa Sur
+     4 Sierra Norte
+     5 Sierra Centro
+     6 Sierra Sur
+     7 Selva
+     8 Lima Metropolitana
+7. **ESTRATO**: Estrato geográfico
      1 De 500 000 a más habitantes. 
      2 De 100 000 a 499 999 habitantes. 
      3 De 50 000 a 99 999 habitantes. 
@@ -133,39 +168,83 @@ enaho_household
      9 Pensionista 
      10 Otros no parientes 
      11 Hermano(a)
-9. **P207**: Sexo (1 Hombre, 2 Mujer)
+9. **P207**: Sexo 
+    1 Hombre
+    2 Mujer
 10. **P208A**: ¿ Qué edad tiene en años cumplidos ? - En años 99 Missing value 
-11. **P209**  ¿Cuál es su estado civil o conyugal? (1 Conviviente, 2 Casado(a), 3 Viudo(a), 4 Divorciado(a), 5 Separado(a), 6 Soltero(a))
+11. **P209**  ¿Cuál es su estado civil o conyugal?
+    1 Conviviente
+    2 Casado(a)
+    3 Viudo(a)
+    4 Divorciado(a)
+    5 Separado(a)
+    6 Soltero(a)
 
 ```{r}
 tic("Reading")
-enaho_people <- 
+enaho_people <-
   fread(
     DATASET_ENAHO_200,
     data.table = FALSE,
     sep = ",",
     encoding = "Latin-1",
-    select = c("CONGLOME", "VIVIENDA", "HOGAR", "CODPERSO", "UBIGEO", "DOMINIO", "ESTRATO",
-               "P203", "P207", "P208A", "P209"),
-    colClasses = c("CONGLOME" = "integer",
-                   "VIVIENDA" = "integer",
-                   "HOGAR" = "integer",
-                   "CODPERSO" = "integer",
-                   "UBIGEO" = "character",
-                   "DOMINIO" = "integer",
-                   "ESTRATO" = "integer",
-                   "P203" = "integer",
-                   "P207" = "integer",
-                   "P208A" = "integer",
-                   "P209" = "integer"
-                   )
-  )
+    select = c(
+      "CONGLOME", "VIVIENDA", "HOGAR", "CODPERSO", "UBIGEO",
+      "DOMINIO", "ESTRATO", "P203", "P207", "P208A",
+      "P209"
+    ),
+    colClasses = c(
+      "CONGLOME" = "integer",
+      "VIVIENDA" = "integer",
+      "HOGAR" = "integer",
+      "CODPERSO" = "integer",
+      "UBIGEO" = "character",
+      "DOMINIO" = "integer",
+      "ESTRATO" = "integer",
+      "P203" = "integer",
+      "P207" = "integer",
+      "P208A" = "integer",
+      "P209" = "integer"
+    ),
+    col.names = c(
+      "CONGLOMERATE", "DWELLING", "HOUSEHOLD", "PEOPLE", "GEOCODE",
+      "DOMAIN", "STRATUM", "RELATIONSHIP", "SEX", "AGE",
+      "MARITAL"
+    )
+  ) %>%
+  mutate("RELATIONSHIP" = factor(
+    RELATIONSHIP,
+    exclude = NA,
+    levels = c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"),
+    labels = c(
+      "Panel", "Jefe(a) familia", "Esposa(o)/compañero(a)", "Hijo(a)/Hijastro(a)", "Yerno/Nuera",
+      "Nieto(a)", "Padres/Suegros", "Otros parientes", "Trabajadora Hogar", "Pensionista",
+      "Otros no parientes ", "Hermano(a)"
+    ),
+    ordered = FALSE
+  )) %>%
+  mutate("SEX" = factor(
+    SEX,
+    exclude = NA,
+    levels = c("1", "2"),
+    labels = c("Hombre", "Mujer"),
+    ordered = FALSE
+  )) %>%
+  mutate("MARITAL" = factor(
+    MARITAL,
+    exclude = NA,
+    levels = c("1", "2", "3", "4", "5", "6"),
+    labels = c("Conviviente", "Casado(a)", "Viudo(a)", "Divorciado(a)", "Separado(a)", "Soltero(a)"),
+    ordered = FALSE
+  ))
+
 toc()
 ```
 
 ```{r}
 enaho_people
 ```
+
 ## Education
 
 **Variables**
@@ -175,9 +254,16 @@ enaho_people
 3. **HOGAR**: Número secuencial del hogar
 4. **CODPERSO**: Número de orden de la persona 
 5. **UBIGEO**: Ubicación geográfica
-6. **DOMINIO**: Dominio Geográfico (1 Costa Norte, 2 Costa Centro, 3 Costa Sur, 4 Sierra Norte, 5 Sierra Centro, 6 Sierra Sur, 7 Selva, 8 Lima Metropolitana)
-7. **ESTRATO**: Número secuencial del hogar
-    (Estrato Geográfico 
+6. **DOMINIO**: Dominio Geográfico
+     1 Costa Norte
+     2 Costa Centro
+     3 Costa Sur
+     4 Sierra Norte
+     5 Sierra Centro
+     6 Sierra Sur
+     7 Selva
+     8 Lima Metropolitana
+7. **ESTRATO**: Estrato geográfico
      1 De 500 000 a más habitantes. 
      2 De 100 000 a 499 999 habitantes. 
      3 De 50 000 a 99 999 habitantes. 
@@ -202,41 +288,72 @@ enaho_people
      14 Matsigenka/Machiguenga 
      15 Achuar
 9. **P301A**: ¿ Cuál es el último año o grado de estudios y nivel que aprobó ? - Nivel 
-    1 Sin nivel 
-    2 Educaion inicial 
-    3 Primaria incompleta 
-    4 Primaria completa 
-    5 Secundaria Incompleta 
-    6 Secundaria completa 
-    7 Superior no universitaria incompleta 
-    8 Superior no Universitaria completa 
-    9 Superior Universitaria Incompleta 
-    10 Superior Universitaria Completa 
-    11 Maestria/doctorado 
-    12 Básica especial 
-    99 Missing value
+     1 Sin nivel 
+     2 Educaion inicial 
+     3 Primaria incompleta 
+     4 Primaria completa 
+     5 Secundaria Incompleta 
+     6 Secundaria completa 
+     7 Superior no universitaria incompleta 
+     8 Superior no Universitaria completa 
+     9 Superior Universitaria Incompleta 
+     10 Superior Universitaria Completa 
+     11 Maestria/doctorado 
+     12 Básica especial 
+     99 Missing value
 
 ```{r}
 tic("Reading")
-enaho_education <- 
+enaho_education <-
   fread(
     DATASET_ENAHO_300,
     data.table = FALSE,
     sep = ",",
     encoding = "Latin-1",
-    select = c("CONGLOME", "VIVIENDA", "HOGAR", "CODPERSO", "UBIGEO", "DOMINIO", "ESTRATO",
-               "P300A", "P301A"),
-    colClasses = c("CONGLOME" = "integer",
-                   "VIVIENDA" = "integer",
-                   "HOGAR" = "integer",
-                   "CODPERSO" = "integer",
-                   "UBIGEO" = "character",
-                   "DOMINIO" = "integer",
-                   "ESTRATO" = "integer",
-                   "P300A" = "integer",
-                   "P301A" = "integer"
-                   )
-  )
+    select = c(
+      "CONGLOME", "VIVIENDA", "HOGAR", "CODPERSO", "UBIGEO",
+      "DOMINIO", "ESTRATO", "P300A", "P301A"
+    ),
+    colClasses = c(
+      "CONGLOME" = "integer",
+      "VIVIENDA" = "integer",
+      "HOGAR" = "integer",
+      "CODPERSO" = "integer",
+      "UBIGEO" = "character",
+      "DOMINIO" = "integer",
+      "ESTRATO" = "integer",
+      "P300A" = "integer",
+      "P301A" = "integer"
+    ),
+    col.names = c(
+      "CONGLOMERATE", "DWELLING", "HOUSEHOLD", "PEOPLE", "GEOCODE",
+      "DOMAIN", "STRATUM", "LANGUAGE", "EDUCATION"
+    )
+  ) %>%
+  mutate("LANGUAGE" = factor(
+    LANGUAGE,
+    exclude = NA,
+    levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"),
+    labels = c(
+      "Quechua", "Aimara", "Otra lengua nativa", "Castellano", "5", "Portugués",
+      "Otra lengua extranjera", "No escucha/no habla", "Lengua de señas peruanas",
+      "Ashaninka", "Awajun/Aguaruna", "Shipibo-Konibo", "Shawi/Chayahuita", "Matsigenka/Machiguenga",
+      "Achuar"
+    ),
+    ordered = FALSE
+  )) %>%
+  mutate("EDUCATION" = factor(
+    EDUCATION,
+    exclude = NA,
+    levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"),
+    labels = c(
+      "Sin nivel", "Educaion inicial", "Primaria incompleta", "Primaria completa",
+      "Secundaria Incompleta", "Secundaria completa", "Superior no universitaria incompleta",
+      "Superior no Universitaria completa", "Superior Universitaria Incompleta",
+      "Superior Universitaria Incompleta", "Maestria/doctorado", "Básica especial"
+    ),
+    ordered = FALSE
+  ))
 toc()
 ```
 
@@ -250,9 +367,16 @@ enaho_education
 3. **HOGAR**: Número secuencial del hogar
 4. **CODPERSO**: Número de orden de la persona 
 5. **UBIGEO**: Ubicación geográfica
-6. **DOMINIO**: Dominio Geográfico (1 Costa Norte, 2 Costa Centro, 3 Costa Sur, 4 Sierra Norte, 5 Sierra Centro, 6 Sierra Sur, 7 Selva, 8 Lima Metropolitana)
-7. **ESTRATO**: Número secuencial del hogar
-    (Estrato Geográfico 
+6. **DOMINIO**: Dominio Geográfico
+     1 Costa Norte
+     2 Costa Centro
+     3 Costa Sur
+     4 Sierra Norte
+     5 Sierra Centro
+     6 Sierra Sur
+     7 Selva
+     8 Lima Metropolitana
+7. **ESTRATO**: Estrato geográfico
      1 De 500 000 a más habitantes. 
      2 De 100 000 a 499 999 habitantes. 
      3 De 50 000 a 99 999 habitantes. 
@@ -261,34 +385,53 @@ enaho_education
      6 De 500 a 1 999 habitantes. 
      7 Área de Empadronamiento Rural (AER) Compuesto 
      8 Área de Empadronamiento Rural (AER) Simple)
-8. **P501** La semana pasada del...al ...tuvo Ud. algún trabajo? (1 Si, 2 No, 9 Missing Value)
+8. **P501** La semana pasada del...al ...tuvo Ud. algún trabajo?
+     1 Si
+     2 No
+     9 Missing Value
 9. **P505**  ¿Cuál es la ocupación principal que desempeño? (revisión CIOU-88) 999 Missing value
 10. **P505R4** ¿Cuál es la ocupación principal que desempeño? (revisión CIOU-2015) 9999 Missing value
 11. **P524A1** Ingreso total-monto (S/.) 999999 Missing value
 
 ```{r}
 tic("Reading")
-enaho_incomes <- 
+enaho_incomes <-
   fread(
     DATASET_ENAHO_500,
     data.table = FALSE,
     sep = ",",
     encoding = "Latin-1",
-    select = c("CONGLOME", "VIVIENDA", "HOGAR", "CODPERSO", "UBIGEO", "DOMINIO", "ESTRATO",
-               "P501", "P505", "P505R4", "P524A1"),
-    colClasses = c("CONGLOME" = "integer",
-                   "VIVIENDA" = "integer",
-                   "HOGAR" = "integer",
-                   "CODPERSO" = "integer",
-                   "UBIGEO" = "character",
-                   "DOMINIO" = "integer",
-                   "ESTRATO" = "integer",
-                   "P501" = "integer",
-                   "P505" = "integer",
-                   "P505R4" = "integer",
-                   "P524A1" = "numeric"
-                   )
-  )
+    select = c(
+      "CONGLOME", "VIVIENDA", "HOGAR", "CODPERSO", "UBIGEO",
+      "DOMINIO", "ESTRATO", "P501", "P505","P505R4",
+      "P524A1"
+    ),
+    colClasses = c(
+      "CONGLOME" = "integer",
+      "VIVIENDA" = "integer",
+      "HOGAR" = "integer",
+      "CODPERSO" = "integer",
+      "UBIGEO" = "character",
+      "DOMINIO" = "integer",
+      "ESTRATO" = "integer",
+      "P501" = "integer",
+      "P505" = "integer",
+      "P505R4" = "integer",
+      "P524A1" = "numeric"
+    ),
+    col.names = c(
+      "CONGLOMERATE", "DWELLING", "HOUSEHOLD", "PEOPLE", "GEOCODE",
+      "DOMAIN", "STRATUM", "WORKING", "JOB88", "JOB2015", "INCOME"
+    )
+  ) %>%
+  mutate("WORKING" = factor(
+    WORKING,
+    exclude = NA,
+    levels = c("1", "2"),
+    labels = c("Si", "No"),
+    ordered = FALSE
+  )) %>%
+  mutate("INCOME" = replace(INCOME, INCOME == 999999, NA))
 toc()
 ```
 
@@ -296,5 +439,181 @@ toc()
 enaho_incomes
 ```
 
+## Job dataset
 
+List of jobs according INEI
 
+### Jobs CNO 2015
+
+```{r}
+DATASET_JOBS_2015 <- paste(DATA_RAW_PATH, "ENAHO/737-Modulo02/ENAHO-TABLA-CNO-2015.csv", sep = "/")
+```
+
+```{r}
+tic("Reading")
+jobs_cno_2015 <-
+  data.frame(
+  LINE = read_lines(
+      file = DATASET_JOBS_2015,
+      locale = locale(encoding = "ISO-8859-1"),
+    )[-1]
+  ) %>%
+  dplyr::rowwise() %>%
+  mutate(
+    COD = as.integer(str_replace(str_split(LINE, ",", 2)[[1]][1], '"', ''))
+  ) %>%
+  mutate(
+    JOBNAME2015 = str_replace_all(str_split(LINE, ",", 2)[[1]][2], "\"", '')
+  ) %>%  
+  ungroup() %>%
+  select("COD", "JOBNAME2015")
+toc()
+```
+```{r}
+jobs_cno_2015
+```
+
+### Jobs CIUO 88
+
+```{r}
+DATASET_JOBS_88 <- paste(DATA_RAW_PATH, "ENAHO/737-Modulo02/ENAHO-TABLA-CIUO-88.csv", sep = "/")
+```
+
+```{r}
+tic("Reading")
+jobs_ciuo_88 <-
+  data.frame(
+  LINE = read_lines(
+      file = DATASET_JOBS_88,
+      locale = locale(encoding = "ISO-8859-1"),
+    )[-1]
+  ) %>%
+  dplyr::rowwise() %>%
+  mutate(
+    GRANGRUP = as.integer(str_replace(str_split(LINE, ",", 6)[[1]][1], '"', ''))
+  ) %>%
+  mutate(
+    GRUPO = as.integer(str_replace(str_split(LINE, ",", 6)[[1]][2], '"', ''))
+  ) %>%
+  mutate(
+    SUBGRUPO = as.integer(str_replace(str_split(LINE, ",", 6)[[1]][3], '"', ''))
+  ) %>%
+  mutate(
+    CODOCUPA = as.integer(str_replace(str_split(LINE, ",", 6)[[1]][4], '"', ''))
+  ) %>%
+  mutate(
+    DESOCUPA = as.integer(str_replace(str_split(LINE, ",", 6)[[1]][5], '"', ''))
+  ) %>%  
+  mutate(
+    JOBNAME88 = str_replace_all(str_split(LINE, ",", 6)[[1]][6], "\"", '')
+  ) %>%  
+  ungroup() %>%
+  select("GRANGRUP", "GRUPO", "SUBGRUPO", "CODOCUPA", "DESOCUPA", "JOBNAME88")
+toc()
+```
+
+```{r}
+jobs_ciuo_88
+```
+
+## Merge and Wrangling
+
+### Wrangling Household
+
+```{r}
+enaho_household_level <-
+  enaho_household %>%
+  mutate("DOMAIN" = factor(
+    DOMAIN,
+    exclude = NA,
+    levels = c("1", "2", "3", "4", "5", "6", "7", "8"),
+    labels = c(
+      "Costa Norte", "Costa Centro", "Costa Sur", "Sierra Norte", "Sierra Centro",
+      "Sierra Sur", "Selva", "Lima Metropolitana"
+    ),
+    ordered = FALSE
+  )) %>%
+  mutate("STRATUM" = factor(
+    STRATUM,
+    exclude = NA,
+    levels = c("1", "2", "3", "4", "5", "6", "7", "8"),
+    labels = c(
+      "[500000, Inf)", "[100000, 500000)", "[50000, 100000)", "[20000, 50000)",
+      "[2000, 20000)", "[500, 2000)", "AER Compuesto", "AER Simple"
+    ),
+    ordered = FALSE
+  )) %>%
+  mutate("REGCODE" = str_sub(GEOCODE, 1, 2)) %>%
+  mutate("PROVCODE" = str_sub(GEOCODE, 1, 4)) %>%
+  mutate("HID" = 1:n()) %>%
+  relocate("HID", .before = "CONGLOMERATE")
+```
+
+```{r}
+enaho_household_level
+```
+### Wrangling People
+
+```{r}
+key <- c("CONGLOMERATE", "DWELLING", "HOUSEHOLD", "PEOPLE", "GEOCODE")
+key_household <- c("CONGLOMERATE", "DWELLING", "HOUSEHOLD", "GEOCODE")
+```
+
+```{r}
+tic("Join")
+enaho_people_level <-
+  enaho_people %>%
+  left_join(
+    enaho_education %>%
+      select(key, "LANGUAGE", "EDUCATION"),
+    by = all_of(key),
+    keep = FALSE
+  ) %>%
+  left_join(
+    enaho_incomes %>%
+      select(key, "WORKING", "JOB88", "JOB2015", "INCOME"),
+    by = all_of(key),
+    keep = FALSE
+  ) %>%
+  left_join(
+    enaho_household_level %>%
+      select(key_household, "HID"),
+    by = all_of(key_household),
+    keep = FALSE
+  ) %>%  
+  left_join(
+    jobs_cno_2015,
+    by = c("JOB2015" = "COD"),
+    keep = FALSE
+  ) %>%   
+  mutate("DOMAIN" = factor(
+    DOMAIN,
+    exclude = NA,
+    levels = c("1", "2", "3", "4", "5", "6", "7", "8"),
+    labels = c(
+      "Costa Norte", "Costa Centro", "Costa Sur", "Sierra Norte", "Sierra Centro",
+      "Sierra Sur", "Selva", "Lima Metropolitana"
+    ),
+    ordered = FALSE
+  )) %>%
+  mutate("STRATUM" = factor(
+    STRATUM,
+    exclude = NA,
+    levels = c("1", "2", "3", "4", "5", "6", "7", "8"),
+    labels = c(
+      "[500000, Inf)", "[100000, 500000)", "[50000, 100000)", "[20000, 50000)",
+      "[2000, 20000)", "[500, 2000)", "AER Compuesto", "AER Simple"
+    ),
+    ordered = FALSE
+  )) %>%
+  mutate("REGCODE" = str_sub(GEOCODE, 1, 2)) %>%
+  mutate("PROVCODE" = str_sub(GEOCODE, 1, 4)) %>%
+  mutate("PID" = 1:n()) %>%
+  relocate("PID", .before = "CONGLOMERATE") %>%
+  relocate("HID", .before = "CONGLOMERATE")
+toc()
+```
+
+```{r}
+enaho_people_level
+```
